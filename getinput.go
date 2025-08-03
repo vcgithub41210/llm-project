@@ -10,15 +10,17 @@ import (
 
 var commands = []string{"exit", "echo"}
 
-
-func HandleCompletion(cmd string) string {
+func HandleCompletion(prefix string, idx int) (string, int) {
+	matches := []string{}
 	for _, c := range commands {
-		if strings.HasPrefix(c, cmd) {
-
-			return c
+		if strings.HasPrefix(c, prefix) {
+			matches = append(matches, c)
 		}
 	}
-	return ""
+	if len(matches) == 0 {
+		return prefix, 0
+	}
+	return matches[idx%len(matches)], idx + 1
 }
 
 func ReadInput() (string, error) {
@@ -31,30 +33,35 @@ func ReadInput() (string, error) {
 
 	buf := make([]byte, 1)
 	cmd := ""
+	completionIndex := 0
+	prefix := ""
 
 	for {
 		_, err := os.Stdin.Read(buf)
 		if err != nil {
 			return "", err
 		}
-		if buf[0] == 9{
-			e := HandleCompletion(cmd)
-			if e != ""{
-				cmd = e
+		if buf[0] == 9 { // Tab key
+			if prefix == "" {
+				prefix = cmd
 			}
-		}else if buf[0] == 127 {
+			cmd, completionIndex = HandleCompletion(prefix, completionIndex)
+		} else if buf[0] == 127 { // Backspace key
 			if len(cmd) > 0 {
 				cmd = cmd[:len(cmd)-1]
+				completionIndex = 0
+				prefix = cmd
 			}
-		}else if buf[0] == 13 {
+		} else if buf[0] == 13 { // Enter key
 			fmt.Println("\r")
 			return cmd, nil
-		}else {
+		} else {
 			cmd += string(buf[0])
+			completionIndex = 0
+			prefix = cmd
 		}
 
 		// Clear and redraw line
 		fmt.Print("\x1b[2K\r$ " + cmd)
 	}
 }
-
