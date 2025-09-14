@@ -7,7 +7,7 @@ import (
     "os"
     "fmt"
 )
-
+//something is wrong with the way I handle quotes and escapes
 var builtins = []string{"type", "echo", "exit", "pwd"}
 
 func ParseCommand(command string) (string,[]string,string,string,int){
